@@ -23,7 +23,7 @@ export default function ScheduledMeeting() {
     }
 
     try {
-      dispatch(createScheduledMeeting(scheduledDate));
+      dispatch(createScheduledMeeting(scheduledDate.toISOString()));
       
       const response = await fetch("/api/meeting", {
         method: "POST",

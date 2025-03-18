@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
@@ -22,14 +21,14 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // session.accessToken = token.accessToken;
+      session.accessToken = typeof token.accessToken === "string" ? token.accessToken : JSON.stringify(token.accessToken);
       return session;
     },
   },
   pages: {
     signIn: "/signin",
   },
-  secret: process.env.NEXTAUTH_SECRET || "qwde32423ewrwer",
+  secret: process.env.NEXTAUTH_SECRET ,
 };
 
 const handler = NextAuth(authOptions);

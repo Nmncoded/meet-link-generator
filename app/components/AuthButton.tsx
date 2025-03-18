@@ -15,11 +15,7 @@ export default function AuthButton() {
     return (
       <div className="flex items-center gap-4">
         {session.user?.image && (
-          <Image 
-            src={session.user.image} 
-            alt={session.user.name || 'User'} 
-            className="w-8 h-8 rounded-full"
-          />
+          <Image src={session.user.image} alt="User" width={32} height={32} className="rounded-full" />
         )}
         <span className="hidden md:inline">{session.user?.name}</span>
         <button

@@ -30,7 +30,7 @@ const meetingSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    createScheduledMeeting: (state, action: PayloadAction<Date>) => {
+    createScheduledMeeting: (state, action: PayloadAction<string>) => {
       state.loading = true;
       state.error = null;
     },
