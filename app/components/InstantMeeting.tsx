@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { createInstantMeeting, meetingSuccess, meetingFailure } from "../store/meetingSlice";
+import { useAppDispatch } from "../store/hooks";
+import { meetingSuccess, meetingFailure } from "../store/meetingSlice";
 
 export default function InstantMeeting() {
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.meetings);
-  const [showLink, setShowLink] = useState(false);
+  // const { loading } = useAppSelector((state) => state.meetings);
+  const [loading, setLoading] = useState(false);
   const [meetingLink, setMeetingLink] = useState("");
 
   const handleCreateMeeting = async () => {
     try {
-      dispatch(createInstantMeeting());
+      // dispatch(createInstantMeeting());
+      setLoading(true);
       
       const response = await fetch("/api/meeting", {
         method: "POST",
@@ -27,9 +28,9 @@ export default function InstantMeeting() {
       }
       
       const data = await response.json();
+      setLoading(false);
       dispatch(meetingSuccess(data));
       setMeetingLink(data.link);
-      setShowLink(true);
     } catch (error) {
       dispatch(meetingFailure(error instanceof Error ? error.message : "Unknown error"));
     }
@@ -48,7 +49,7 @@ export default function InstantMeeting() {
         {loading ? "Creating..." : "Create Instant Meeting"}
       </button>
       
-      {showLink && (
+      {meetingLink && (
         <div className="mt-4 p-4 bg-gray-50 rounded border">
           <p className="font-semibold mb-2">Your meeting link:</p>
           <div className="flex items-center">

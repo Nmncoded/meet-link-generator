@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { v4 as uuidv4 } from 'uuid';
 import { google } from 'googleapis';
 import { authOptions } from '../auth/[...nextauth]/authOptions';
 
@@ -30,7 +29,9 @@ function generateMeetId() {
 async function createGoogleCalendarEvent(
   auth: any,
   scheduledDateTime?: string | null,
-  summary: string = 'Scheduled Meeting'
+  summary: string = 'Scheduled Meeting',
+  attendees: string[] = [],
+  scheduledBy?: string | null
 ) {
   const calendar = google.calendar({ version: 'v3', auth });
 
@@ -39,6 +40,7 @@ async function createGoogleCalendarEvent(
 
   const event = {
     summary,
+    description: scheduledDateTime ? `This meeting is scheduled by ${scheduledBy}.` : '',
     start: {
       dateTime: startDateTime.toISOString(),
       timeZone: 'UTC',
@@ -47,6 +49,7 @@ async function createGoogleCalendarEvent(
       dateTime: endDateTime.toISOString(),
       timeZone: 'UTC',
     },
+    
     conferenceData: {
       createRequest: {
         requestId: generateMeetId(),
@@ -55,12 +58,16 @@ async function createGoogleCalendarEvent(
         },
       },
     },
+    ...(scheduledDateTime && {attendees: attendees.map(email => ({ email })),}),
+    ...(scheduledDateTime && {reminders: { useDefault: false, overrides: [{ method: 'email', minutes: 24 * 60 }, { method: 'popup', minutes: 30 }] } }),
   };
 
   const response = await calendar.events.insert({
     calendarId: 'primary',
     requestBody: event,
     conferenceDataVersion: 1,
+    ...(scheduledDateTime && { sendNotifications: true }),
+    ...(scheduledDateTime && { sendUpdates: 'all' }),
   });
 
   return response.data;
@@ -76,14 +83,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get the organizer's email
+    const scheduledBy = session.user.email;
+    // console.log(scheduledBy,session);
+
     const body = await req.json();
-    const { scheduledDateTime } = body;
+    const { scheduledDateTime, attendees } = body;
 
     // Authenticate with Google OAuth
     const auth = await getAccessToken(session);
 
     // Create a Google Calendar event with a Meet link
-    const event = await createGoogleCalendarEvent(auth, scheduledDateTime);
+    const event = await createGoogleCalendarEvent(auth, scheduledDateTime, scheduledDateTime ? "Scheduled Meeting" : "Instant Meeting" ,attendees,scheduledBy);
 
     const timestamp = new Date().toISOString();
 
